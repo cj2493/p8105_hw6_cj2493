@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(modelr)
 library(mgcv)
+library(purrr)
 ```
 
 ## Problem 1
@@ -54,4 +55,32 @@ balt_logistic = baltimore_hom %>%
 ```
 
 
+```{r, pipe_glm}
+
+```
+
 ## Problem 2
+
+Load and clean birthweight data
+
+```{r, read_birth}
+birthweight = read_csv("./data/birthweight.csv")
+birthweight = birthweight %>%
+  mutate(babysex = as.factor(babysex),
+         frace = as.factor(frace),
+         malform = as.factor(malform),
+         mrace = as.factor(mrace))
+birthweight[!complete.cases(birthweight), ] 
+```
+
+There are 0 observations, so this shows that there are no missing values in the data set. 
+
+
+Propose a regression model for birthweight:
+
+```{r, bwt_model}
+bwt_model_1 = birthweight %>%
+  lm(bwt ~ mrace + fincome + malform + momage + pnumlbw + smoken, data = .) %>%
+  broom::tidy() 
+```
+
