@@ -1,0 +1,20 @@
+---
+title: "Untitled"
+author: "Courtney Johnson"
+date: "November 20, 2018"
+output: github_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+library(tidyverse)
+library(modelr)
+library(mgcv)
+```
+
