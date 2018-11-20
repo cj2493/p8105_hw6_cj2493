@@ -14,6 +14,7 @@ knitr::opts_chunk$set(
   out.width = "90%"
 )
 library(tidyverse)
+library(patchwork)
 library(modelr)
 library(mgcv)
 library(purrr)
@@ -88,26 +89,59 @@ Propose a regression model for birthweight:
 
 ```{r, bwt_model}
 bwt_model_1 = birthweight %>%
-  lm(bwt ~ mrace + fincome + malform + momage + pnumlbw + smoken, data = .) %>%
-  broom::tidy() 
+  lm(bwt ~ mrace + fincome + malform + momage + pnumlbw + smoken, data = .) 
 ```
+To come up with my model, I hypothesized what may affect birthweight from prior knowledge. I know that the race of the mother can impact risk for health complications during birth, so I added that to my model. The family income can affect the prenatal care and diet of the mother, so I thought that may have an affect on the health of the baby as well. I know that the older the mother is, the more likely there are to be complications during birth, so I thought that may impact birthweight. I also guessed that number of prior low birth babies would be a good indicator, so I added that to my model. Lastly, I know that mothers who smoke are more likely to have low birthweight babies, so I added that to my model.
 
-Fit the models for comparison
-
-```{r, comp_models}
+```{r, given_models}
 lm_length_age = birthweight %>%
-  lm(bwt ~ blength + gaweeks, data = .) %>%
-  broom::tidy()
+  lm(bwt ~ blength + gaweeks, data = .) 
 
 lm_interaction = birthweight %>%
-  lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = .) %>%
-  broom::tidy()
+  lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = .) 
 ```
+
+Show a plot of model residuals against fitted values
+
+```{r}
+my_mod = birthweight %>%
+  modelr::add_predictions(., bwt_model_1) %>%
+  modelr::add_residuals(., bwt_model_1) %>%
+  ggplot(aes(x = pred, y = resid)) + geom_point() +
+  ylim(-2500, 2500) +
+  geom_hline(yintercept = 0, color = "blue") +
+  labs(x = "Fitted Values",
+       y = "Residuals",
+       title = "My Model")
+
+mod_length_age = birthweight %>%
+  modelr::add_predictions(., lm_length_age) %>%
+  modelr::add_residuals(., lm_length_age) %>%
+  ggplot(aes(x = pred, y = resid)) + geom_point() +
+  ylim(-2500, 2500) +
+  geom_hline(yintercept = 0, color = "blue") +
+  labs(x = "Fitted Values",
+       y = "Residuals",
+       title = "Length + Age Model")
+
+interaction_mod = birthweight %>%
+  modelr::add_predictions(., lm_interaction) %>%
+  modelr::add_residuals(., lm_interaction) %>%
+  ggplot(aes(x = pred, y = resid)) + geom_point() +
+  ylim(-2500, 2500) +
+  geom_hline(yintercept = 0, color = "blue") +
+  labs(x = "Fitted Values",
+       y = "Residuals",
+       title = "Interaction Model")
+
+my_mod + mod_length_age + interaction_mod
+```
+
+From these, we can see that the residuals look much better for the given models than the model I tried to make.
 
 Compare the models
 
 ```{r, cross_val, warning = FALSE}
-
 cv_df = 
   crossv_mc(birthweight, 100) %>%
   mutate(train = map(train, as_tibble),
@@ -127,6 +161,7 @@ cv_df %>%
   mutate(model = str_replace(model, "rmse_", ""),
          model = fct_inorder(model)) %>%
   ggplot(aes(x = model, y = rmse)) + geom_violin()
-
 ```
 
+
+From this, we can see that the interaction model has the smalled RMSE for the three models, and is the better of the three.
