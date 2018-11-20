@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "p8105_hw6_cj2493"
 author: "Courtney Johnson"
 date: "November 20, 2018"
 output: github_document
@@ -18,3 +18,28 @@ library(modelr)
 library(mgcv)
 ```
 
+## Problem 1
+
+Read in the homicide data:
+
+```{r, read_hom}
+homicides = read_csv("https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv") 
+```
+
+Clean data accordingly: create city_state variable, a binary variable denoting whether the case was solved, omit cities who don't report victim race or were the product of a data entry mistake, modify victim race to white and non-white, and make sure victim_age is numeric.
+
+```{r, hom_clean}
+homicides = homicides %>%
+  janitor::clean_names() %>%
+  mutate(city_state = str_c(city, ", ", state),
+         victim_age = as.numeric(victim_age),
+         victim_race = ifelse(victim_race == "White", c("white"), c("non_white")),
+         solve_status = ifelse(disposition == "Open/No arrest", c("unsolved"), c("solved"))) %>%
+  filter(city_state != "Dallas, TX" & city_state != "Phoenix, AZ" & city_state != "Kansas City, MO" & city_state != "Tulsa, AL") %>%
+  mutate(victim_race = factor(victim_race, levels = c("white", "non_white")))
+```
+
+
+
+
+## Problem 2
