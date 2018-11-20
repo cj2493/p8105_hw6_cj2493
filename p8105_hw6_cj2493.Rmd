@@ -17,6 +17,7 @@ library(tidyverse)
 library(modelr)
 library(mgcv)
 library(purrr)
+set.seed(1)
 ```
 
 ## Problem 1
@@ -89,5 +90,43 @@ Propose a regression model for birthweight:
 bwt_model_1 = birthweight %>%
   lm(bwt ~ mrace + fincome + malform + momage + pnumlbw + smoken, data = .) %>%
   broom::tidy() 
+```
+
+Fit the models for comparison
+
+```{r, comp_models}
+lm_length_age = birthweight %>%
+  lm(bwt ~ blength + gaweeks, data = .) %>%
+  broom::tidy()
+
+lm_interaction = birthweight %>%
+  lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = .) %>%
+  broom::tidy()
+```
+
+Compare the models
+
+```{r, cross_val, warning = FALSE}
+
+cv_df = 
+  crossv_mc(birthweight, 100) %>%
+  mutate(train = map(train, as_tibble),
+         test = map(test, as_tibble))
+
+cv_df = cv_df %>%
+  mutate(bwt_model_1    = map(train, ~lm(bwt ~ mrace + fincome + malform + momage + pnumlbw + smoken, data = .)),
+         lm_length_age  = map(train, ~lm(bwt ~ blength + gaweeks, data = .)),
+         lm_interaction = map(train, ~lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = .))) %>%
+  mutate(rmse_mod_1       = map2_dbl(bwt_model_1, test, ~rmse(model = .x, data = .y)),
+         rmse_length_age  = map2_dbl(lm_length_age, test, ~rmse(model = .x, data = .y)),
+         rmse_interaction = map2_dbl(lm_interaction, test, ~rmse(model = .x, data = .y)))
+
+cv_df %>%
+  select(starts_with("rmse")) %>%
+  gather(key = model, value = rmse) %>%
+  mutate(model = str_replace(model, "rmse_", ""),
+         model = fct_inorder(model)) %>%
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+
 ```
 
