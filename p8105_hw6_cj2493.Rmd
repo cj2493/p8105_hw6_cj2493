@@ -34,12 +34,24 @@ homicides = homicides %>%
   mutate(city_state = str_c(city, ", ", state),
          victim_age = as.numeric(victim_age),
          victim_race = ifelse(victim_race == "White", c("white"), c("non_white")),
-         solve_status = ifelse(disposition == "Open/No arrest", c("unsolved"), c("solved"))) %>%
+         resolved = as.numeric(disposition == "Closed by arrest")) %>%
   filter(city_state != "Dallas, TX" & city_state != "Phoenix, AZ" & city_state != "Kansas City, MO" & city_state != "Tulsa, AL") %>%
-  mutate(victim_race = factor(victim_race, levels = c("white", "non_white")))
+  mutate(victim_sex = factor(victim_sex, levels = c("Male", "Female")),
+         victim_race = fct_relevel(victim_race, "white"))
 ```
 
+For Baltimore, MD, use glm function to fit a logistic regression with resolved vs unresolved as outcome and victim age, sex and race as predictors
 
+
+```{r, baltimore_glm}
+baltimore_hom = homicides %>%
+  filter(city_state == "Baltimore, MD") 
+ 
+
+balt_logistic = baltimore_hom %>%
+  glm(resolved ~ victim_age + victim_sex + victim_race, data = ., family = binomial()) %>%
+  broom::tidy()
+```
 
 
 ## Problem 2
