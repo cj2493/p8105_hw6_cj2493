@@ -14,7 +14,6 @@ knitr::opts_chunk$set(
   out.width = "90%"
 )
 library(tidyverse)
-library(patchwork)
 library(modelr)
 library(mgcv)
 library(purrr)
@@ -145,30 +144,10 @@ my_mod = birthweight %>%
        y = "Residuals",
        title = "My Model")
 
-mod_length_age = birthweight %>%
-  modelr::add_predictions(., lm_length_age) %>%
-  modelr::add_residuals(., lm_length_age) %>%
-  ggplot(aes(x = pred, y = resid)) + geom_point() +
-  ylim(-2500, 2500) +
-  geom_hline(yintercept = 0, color = "blue") +
-  labs(x = "Fitted Values",
-       y = "Residuals",
-       title = "Length + Age Model")
-
-interaction_mod = birthweight %>%
-  modelr::add_predictions(., lm_interaction) %>%
-  modelr::add_residuals(., lm_interaction) %>%
-  ggplot(aes(x = pred, y = resid)) + geom_point() +
-  ylim(-2500, 2500) +
-  geom_hline(yintercept = 0, color = "blue") +
-  labs(x = "Fitted Values",
-       y = "Residuals",
-       title = "Interaction Model")
-
-my_mod + mod_length_age + interaction_mod
+my_mod 
 ```
 
-From these, we can see that the residuals look much better for the given models than the model I tried to make.
+From these, it appears that there are some clusters in the residuals, as opposed to being entirely random. So, already we can see that maybe this is not the best model.
 
 Compare the models.
 
@@ -195,4 +174,4 @@ cv_df %>%
 ```
 
 
-From this, we can see that the interaction model has the smalled RMSE for the three models, and is the better of the three.
+From this, we can see definitively that the interaction model has the smallest RMSE for the three models, and is thus the better of the three.
